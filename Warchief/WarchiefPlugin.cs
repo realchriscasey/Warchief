@@ -26,7 +26,7 @@ namespace Warchief
 
         public string ButtonText => "DO NOT PUSH THIS BUTTON!";
         public string Author => "realchriscasey";
-        public Version Version => new Version(0, 0, 9);
+        public Version Version => new Version(0, 2, 0);
         public System.Windows.Controls.MenuItem MenuItem => null;
 
         void IPlugin.OnButtonPress()
