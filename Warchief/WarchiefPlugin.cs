@@ -22,7 +22,7 @@ namespace Warchief
         public string Name => "Warchief";
         public string Description
             =>
-                "Lok-regar no'gall! Use your keyboard or gamepad to play Hearthstone.";
+                "Lok-regar no'gall!\n\nUse your keyboard or gamepad to play Hearthstone.\n\n[+--oo]\n";
 
         public string ButtonText => "DO NOT PUSH THIS BUTTON!";
         public string Author => "realchriscasey";
