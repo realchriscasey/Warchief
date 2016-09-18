@@ -14,9 +14,24 @@ namespace Warchief
 {
     class TargetingDummy : CommandModule
     {
-        private enum Region { FACE, EnemyRow, PlayerRow, Hero, Hand }
+        //private enum Region { FACE, EnemyRow, PlayerRow, Hero, Hand }
+        //Region currentRegion = Region.Hero;
 
-        Region currentRegion = Region.Hero;
+            //TODO: this would be way cleaner if it was a doubly-linked list instead of array/idx
+        private List<BoardRegionNavigation> regions;
+        int currentRegion;        
+
+        public TargetingDummy()
+        {
+            regions = new List<BoardRegionNavigation>();
+            regions.Add(new OpponentNavigator());
+            regions.Add(new MinionNavigator(false));
+            regions.Add(new MinionNavigator(true));
+            regions.Add(new HeroNavigator());
+            regions.Add(new HandNavigator());
+            currentRegion = 3;
+            regions[3].SwitchTo();
+        }
 
         public CommandModule Command(InputCommand input)
         {
@@ -42,32 +57,38 @@ namespace Warchief
             return this;
         }
 
-        private void setRegion(Region region)
+        private static WindowsPoint playerHandLocation = new WindowsPoint(0, -90);
+
+        private bool setRegion(int region)
         {
-            currentRegion = region;
-            switch(currentRegion)
+            if (region < 0 || region >= regions.Count)
             {
-                case Region.FACE:
-                    Cursor.Position = getAbsolutePos(new WindowsPoint(0, 63));
-                    break;
-                case Region.EnemyRow:
-                    Cursor.Position = getAbsolutePos(new WindowsPoint(0, 20));
-                    break;
-                case Region.PlayerRow:
-                    Cursor.Position = getAbsolutePos(new WindowsPoint(0, -12));
-                    break;
-                case Region.Hero:
-                    Cursor.Position = getAbsolutePos(new WindowsPoint(0, -60));
-                    break;
-                case Region.Hand:
-                    Cursor.Position = getAbsolutePos(new WindowsPoint(0, -90));
-                    break;
+                return false;
             }
+            currentRegion = region;
+            WindowsPoint location = regions[currentRegion].SwitchTo();
+
+            Cursor.Position = getAbsolutePos(location);
+            return true;
         }
 
-        //dumbest dummy function ever
         private void navigate(InputCommand direction)
         {
+            WindowsPoint location = regions[currentRegion].Navigate(direction == InputCommand.Right);
+            Cursor.Position = getAbsolutePos(location);
+            return;
+
+            //emotes:
+            //Thanks: -11, -36
+            //Well Played: -20, -52
+            //Greetings: -19, -69
+
+            //Wow: 45, -36
+            //Oops: 53, -52
+            //Threaten: 52,-69
+
+            //dumbest fallback function ever
+            /*
             int offset;
 
             if (direction == InputCommand.Left) {
@@ -77,6 +98,7 @@ namespace Warchief
             }
 
             Cursor.Position = new DrawingPoint(Cursor.Position.X + offset, Cursor.Position.Y);
+            */
         }
 
         private const int CLICK_SLEEP_TIME_MS = 5;
@@ -104,6 +126,8 @@ namespace Warchief
         /* top of screen is (0,100) */
         /* left side of board is (-133,0).  the board is roughly 4:3 shape. */
         /* in 16:9 displays, the padding around the board extends to (177,0) */
+
+            //TODO: replace most references to `WindowsPoint` with `AlgalonPoint`
 
         static double GLOBAL_SCALE = 100.0;
         static double EMPIRICAL_X_OFFSET = 0;
