@@ -17,5 +17,14 @@ namespace Warchief
         {
             return opponentHeroLocation;
         }
+        public CommandModule Select(CommandModule current)
+        {
+            return null;
+        }
+
+        public CommandModule Unselect(CommandModule current)
+        {
+            return null;
+        }
     }
 }

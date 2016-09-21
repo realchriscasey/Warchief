@@ -11,11 +11,12 @@ namespace Warchief
 {
     class MinionNavigator : BoardRegionNavigation
     {
+        public static int HUGE_HACK = -1;
+
         private WindowsPoint minionRowCenter;
         private bool isPlayer;
 
         private int minionIndex;
-        private bool isEndTurn;
 
         private static WindowsPoint opponentMinionRowLocation = new WindowsPoint(0, 20);
         private static WindowsPoint playerMinionRowLocation = new WindowsPoint(0, -20);
@@ -39,7 +40,7 @@ namespace Warchief
         {
             int minionCount = getMinionCount();
 
-            minionIndex += 1 * (toTheRight ? 1 : -1);
+            minionIndex += (toTheRight ? 1 : -1);
             if (minionIndex < 0)
             {
                 minionIndex = 0;
@@ -72,7 +73,23 @@ namespace Warchief
 
         private int getMinionCount()
         {
+            if (isPlayer && HUGE_HACK > -1)
+            {
+                return HUGE_HACK;
+            }
+
             return (isPlayer ? CoreAPI.Game.PlayerMinionCount : CoreAPI.Game.OpponentMinionCount);
+        }
+
+        public CommandModule Select(CommandModule current)
+        {
+            //TODO it would be cool if this switched region to the opponent's board or face
+            return null;
+        }
+
+        public CommandModule Unselect(CommandModule current)
+        {
+            return null;
         }
     }
 }

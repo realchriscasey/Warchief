@@ -10,10 +10,14 @@ namespace Warchief
     /* Board regions and left/right navigation within */
     interface BoardRegionNavigation
     {
-        //navigate onto the region
+        // navigate onto the region
         WindowsPoint SwitchTo();
 
         // Navigate to the left or to the right
         WindowsPoint Navigate(bool toTheRight);
+
+        // optionally, bubble a new CommandModule
+        CommandModule Select(CommandModule current);
+        CommandModule Unselect(CommandModule current);
     }
 }

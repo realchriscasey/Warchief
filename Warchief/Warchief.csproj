@@ -71,10 +71,12 @@
   <ItemGroup>
     <Compile Include="BoardRegionNavigation.cs" />
     <Compile Include="CommandModule.cs" />
+    <Compile Include="EmoteCommand.cs" />
     <Compile Include="HandNavigator.cs" />
     <Compile Include="HeroNavigator.cs" />
     <Compile Include="InputCommand.cs" />
     <Compile Include="MinionNavigator.cs" />
+    <Compile Include="MinionPlacementCommand.cs" />
     <Compile Include="OpponentNavigator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TargetingDummy.cs" />

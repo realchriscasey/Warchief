@@ -14,5 +14,6 @@ namespace Warchief
         // returns: null, if the command was not processed
 
         CommandModule Command(InputCommand input);
+        void SwitchTo();
     }
 }

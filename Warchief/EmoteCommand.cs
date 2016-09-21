@@ -2,98 +2,85 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using DrawingPoint = System.Drawing.Point;
 using WindowsPoint = System.Windows.Point;
 
 namespace Warchief
 {
-    class TargetingDummy : CommandModule
+    internal class EmoteCommand : CommandModule
     {
-        //TODO: this would be a bit cleaner if it was a doubly-linked list instead of array/idx
-        private List<BoardRegionNavigation> regions;
-        int currentRegionIndex;        
+        private CommandModule parent;
 
-        public TargetingDummy()
+        public EmoteCommand(CommandModule parent)
         {
-            regions = new List<BoardRegionNavigation>();
-            regions.Add(new OpponentNavigator());
-            regions.Add(new MinionNavigator(false));
-            regions.Add(new MinionNavigator(true));
-            regions.Add(new HeroNavigator());
-            regions.Add(new HandNavigator());
-            setRegion(3);
+            this.parent = parent;
         }
+        private int emoteIndex = 1;
+        private bool emotesOnRight = false;
+
+        private List<WindowsPoint> leftEmotes = 
+            new List<WindowsPoint> {
+                new WindowsPoint(-11, -36),
+                new WindowsPoint(-20, -52),
+                new WindowsPoint(-19, -69)
+            };
+
+        private List<WindowsPoint> rightEmotes =
+            new List<WindowsPoint> {
+                new WindowsPoint(45, -36),
+                new WindowsPoint(53, -52),
+                new WindowsPoint(52, -69)
+            };
 
         public CommandModule Command(InputCommand input)
         {
             switch (input)
             {
                 case InputCommand.Up:
-                    setRegion(currentRegionIndex - 1);
+                    navigate(emoteIndex - 1);
                     break;
                 case InputCommand.Down:
-                    setRegion(currentRegionIndex + 1);
+                    navigate(emoteIndex + 1);
                     break;
                 case InputCommand.Left:
+                    emotesOnRight = false;
+                    break;
                 case InputCommand.Right:
-                    navigate(input);
+                    emotesOnRight = true;                    
                     break;
                 case InputCommand.Select:
-                    return Select();
+                    click();
+                    return parent;
+                    break;
                 case InputCommand.Unselect:
-                    return Unselect();
+                    rightClick();
+                    return parent;
+                    break;
             }
+
+            updatePosition();
             return this;
         }
 
-        private static WindowsPoint playerHandLocation = new WindowsPoint(0, -90);
-
-        public bool setRegion(int region)
+        private void navigate(int newIndex)
         {
-            if (region < 0 || region >= regions.Count)
+            if (newIndex < 0 || newIndex >= 3)
             {
-                return false;
+                return;
             }
-            currentRegionIndex = region;
-            WindowsPoint location = regions[currentRegionIndex].SwitchTo();
-
-            Cursor.Position = getAbsolutePos(location);
-            return true;
+            emoteIndex = newIndex;
         }
 
-        private void navigate(InputCommand direction)
+        private void updatePosition()
         {
-            WindowsPoint location = regions[currentRegionIndex].Navigate(direction == InputCommand.Right);
-            Cursor.Position = getAbsolutePos(location);
-            return;
+            List<WindowsPoint> currentEmotes = emotesOnRight ? rightEmotes : leftEmotes;
+
+            Cursor.Position = getAbsolutePos(currentEmotes[emoteIndex]);
         }
 
-        private CommandModule Select()
-        {
-            //TODO kiil urself
-            MinionNavigator.HUGE_HACK = -1;
-
-            CommandModule next = regions[currentRegionIndex].Select(this);
-            click();
-            next.SwitchTo();
-            return next;
-        }
-
-        private CommandModule Unselect()
-        {
-            //TODO kiil urself
-            MinionNavigator.HUGE_HACK = -1;
-
-            CommandModule next = regions[currentRegionIndex].Unselect(this);
-            rightClick();
-            next.SwitchTo();
-            return next;
-        }
+        //TODO move all cursor navigation to helper library
 
         /* `ALGALON` coordinate system for hearthstone */
 
@@ -105,7 +92,7 @@ namespace Warchief
         /* left side of board is (-133,0).  the board is roughly 4:3 shape. */
         /* in 16:9 displays, the padding around the board extends to (177,0) */
 
-            //TODO: replace most references to `WindowsPoint` with `AlgalonPoint`
+        //TODO: replace most references to `WindowsPoint` with `AlgalonPoint`
 
         static double GLOBAL_SCALE = 100.0;
         static double EMPIRICAL_X_OFFSET = 0;
@@ -168,15 +155,13 @@ namespace Warchief
         }
         */
 
-        private const int CLICK_SLEEP_TIME_MS = 30;
-        private const int CLICK_SLEEP_TIME_AFTER_MS = 30;
+        private const int CLICK_SLEEP_TIME_MS = 5;
 
         private void click()
         {
             User32.mouse_event((uint)User32.MouseEventFlags.LeftDown, 0, 0, 0, UIntPtr.Zero);
             Thread.Sleep(CLICK_SLEEP_TIME_MS);
             User32.mouse_event((uint)User32.MouseEventFlags.LeftUp, 0, 0, 0, UIntPtr.Zero);
-            Thread.Sleep(CLICK_SLEEP_TIME_AFTER_MS);
         }
 
         private void rightClick()
@@ -184,7 +169,6 @@ namespace Warchief
             User32.mouse_event((uint)User32.MouseEventFlags.RightDown, 0, 0, 0, UIntPtr.Zero);
             Thread.Sleep(CLICK_SLEEP_TIME_MS);
             User32.mouse_event((uint)User32.MouseEventFlags.RightUp, 0, 0, 0, UIntPtr.Zero);
-            Thread.Sleep(CLICK_SLEEP_TIME_AFTER_MS);
         }
 
         public void SwitchTo()

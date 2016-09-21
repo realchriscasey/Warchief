@@ -1,32 +1,36 @@
-﻿using Hearthstone_Deck_Tracker;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using Hearthstone_Deck_Tracker.Hearthstone.Entities;
+using CoreAPI = Hearthstone_Deck_Tracker.API.Core;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using DrawingPoint = System.Drawing.Point;
 using WindowsPoint = System.Windows.Point;
+using Hearthstone_Deck_Tracker;
 
 namespace Warchief
 {
-    class TargetingDummy : CommandModule
+    internal class MinionPlacementCommand : CommandModule
     {
-        //TODO: this would be a bit cleaner if it was a doubly-linked list instead of array/idx
-        private List<BoardRegionNavigation> regions;
-        int currentRegionIndex;        
+        private Entity minionEntity;
+        private CommandModule parent;
 
-        public TargetingDummy()
+        int minionIndex = 0;
+
+        private static WindowsPoint playerMinionRowLocation = new WindowsPoint(0, -20);
+
+        public CommandModule init(Entity card, CommandModule parent)
         {
-            regions = new List<BoardRegionNavigation>();
-            regions.Add(new OpponentNavigator());
-            regions.Add(new MinionNavigator(false));
-            regions.Add(new MinionNavigator(true));
-            regions.Add(new HeroNavigator());
-            regions.Add(new HandNavigator());
-            setRegion(3);
+            this.minionEntity = card;
+            this.parent = parent;
+            minionIndex = getMinionCount() / 2;
+
+            return this;
+        }
+
+        public void SwitchTo()
+        {
+            Cursor.Position = getAbsolutePos(minionLocation(minionIndex));
         }
 
         public CommandModule Command(InputCommand input)
@@ -34,66 +38,72 @@ namespace Warchief
             switch (input)
             {
                 case InputCommand.Up:
-                    setRegion(currentRegionIndex - 1);
-                    break;
                 case InputCommand.Down:
-                    setRegion(currentRegionIndex + 1);
                     break;
                 case InputCommand.Left:
                 case InputCommand.Right:
-                    navigate(input);
+                    Navigate(input == InputCommand.Right);
                     break;
                 case InputCommand.Select:
-                    return Select();
+                    //TODO kiil urself
+                    MinionNavigator.HUGE_HACK = getMinionCount();
+
+                    click();
+                    if (parent is TargetingDummy)
+                    {
+                        ((TargetingDummy)parent).setRegion(2);
+                    }
+                    return parent;
                 case InputCommand.Unselect:
-                    return Unselect();
+                    rightClick();
+
+                    if (parent is TargetingDummy)
+                    {
+                        ((TargetingDummy)parent).setRegion(4);
+                    }
+                    return parent;
             }
             return this;
         }
 
-        private static WindowsPoint playerHandLocation = new WindowsPoint(0, -90);
-
-        public bool setRegion(int region)
+        public void Navigate(bool toTheRight)
         {
-            if (region < 0 || region >= regions.Count)
+            int minionCount = getMinionCount();
+
+            minionIndex += (toTheRight ? 1 : -1);
+            if (minionIndex < 0)
             {
-                return false;
+                minionIndex = 0;
             }
-            currentRegionIndex = region;
-            WindowsPoint location = regions[currentRegionIndex].SwitchTo();
+            else if (minionIndex >= minionCount)
+            {
+                minionIndex = minionCount - 1;
+            }
 
+            WindowsPoint location = minionLocation(minionIndex);
             Cursor.Position = getAbsolutePos(location);
-            return true;
-        }
 
-        private void navigate(InputCommand direction)
-        {
-            WindowsPoint location = regions[currentRegionIndex].Navigate(direction == InputCommand.Right);
-            Cursor.Position = getAbsolutePos(location);
             return;
         }
 
-        private CommandModule Select()
-        {
-            //TODO kiil urself
-            MinionNavigator.HUGE_HACK = -1;
+        private static double MINION_OFFSET = 26.0;
 
-            CommandModule next = regions[currentRegionIndex].Select(this);
-            click();
-            next.SwitchTo();
-            return next;
+        private WindowsPoint minionLocation(int minionIndex)
+        {
+            int minionCount = getMinionCount();
+
+            double minion0Location = -1 * (minionCount - 1) * MINION_OFFSET / 2;
+            return new WindowsPoint(playerMinionRowLocation.X + minion0Location + minionIndex * MINION_OFFSET,
+                playerMinionRowLocation.Y);
         }
 
-        private CommandModule Unselect()
+        private int getMinionCount()
         {
-            //TODO kiil urself
-            MinionNavigator.HUGE_HACK = -1;
-
-            CommandModule next = regions[currentRegionIndex].Unselect(this);
-            rightClick();
-            next.SwitchTo();
-            return next;
+            return CoreAPI.Game.PlayerMinionCount + 1;
         }
+
+
+        //TODO move all cursor navigation to helper library
 
         /* `ALGALON` coordinate system for hearthstone */
 
@@ -105,7 +115,7 @@ namespace Warchief
         /* left side of board is (-133,0).  the board is roughly 4:3 shape. */
         /* in 16:9 displays, the padding around the board extends to (177,0) */
 
-            //TODO: replace most references to `WindowsPoint` with `AlgalonPoint`
+        //TODO: replace most references to `WindowsPoint` with `AlgalonPoint`
 
         static double GLOBAL_SCALE = 100.0;
         static double EMPIRICAL_X_OFFSET = 0;
@@ -185,11 +195,6 @@ namespace Warchief
             Thread.Sleep(CLICK_SLEEP_TIME_MS);
             User32.mouse_event((uint)User32.MouseEventFlags.RightUp, 0, 0, 0, UIntPtr.Zero);
             Thread.Sleep(CLICK_SLEEP_TIME_AFTER_MS);
-        }
-
-        public void SwitchTo()
-        {
-            return;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Hearthstone_Deck_Tracker.Hearthstone.Entities;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using CoreAPI = Hearthstone_Deck_Tracker.API.Core;
@@ -10,6 +11,7 @@ namespace Warchief
     {
         private static WindowsPoint handCenterDefault = new WindowsPoint(0, -90);
         private static List<List<WindowsPoint>> handLocations;
+        MinionPlacementCommand minionPlacement = new MinionPlacementCommand();
 
         private int handIndex;
 
@@ -137,6 +139,21 @@ namespace Warchief
             return handLocation(handIndex);
         }
 
+        private Entity currentHover()
+        {
+            IEnumerable<Entity> handCards = CoreAPI.Game.Player.Hand;
+
+            foreach(Entity card in handCards)
+            {
+                if (card.GetTag(HearthDb.Enums.GameTag.ZONE_POSITION) == handIndex + 1)
+                {
+                    return card;
+                }
+            }
+            return null;
+        }
+
+
         private WindowsPoint handLocation(int handIndex)
         {
             int handSize = getHandSize();
@@ -151,6 +168,22 @@ namespace Warchief
         private int getHandSize()
         {
             return CoreAPI.Game.Player.HandCount;
+        }
+
+        public CommandModule Select(CommandModule current)
+        {
+            //if currently selected card is a minion, switch to minion-placer
+            Entity card = currentHover();
+            if (card != null && card.IsMinion)
+            {
+                return minionPlacement.init(card, current);
+            }
+            return null;
+        }
+
+        public CommandModule Unselect(CommandModule current)
+        {
+            return null;
         }
     }
 }

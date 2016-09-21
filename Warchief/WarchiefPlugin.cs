@@ -22,11 +22,11 @@ namespace Warchief
         public string Name => "Warchief";
         public string Description
             =>
-                "Lok-regar no'gall!\n\nUse your keyboard or gamepad to play Hearthstone.\n\n[+--oo]\n";
+                "Lok-regar no'gall!\n\nUse your keyboard or gamepad to play Hearthstone.\n\n~[+--oo]\n";
 
         public string ButtonText => "DO NOT PUSH THIS BUTTON!";
         public string Author => "realchriscasey";
-        public Version Version => new Version(0, 2, 0);
+        public Version Version => new Version(0, 6, 0);
         public System.Windows.Controls.MenuItem MenuItem => null;
 
         void IPlugin.OnButtonPress()

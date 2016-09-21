@@ -23,5 +23,19 @@ namespace Warchief
             targetIsHero = !toTheRight;
             return (targetIsHero ? playerHeroLocation : playerHeroPowerLocation);
         }
+
+        public CommandModule Select(CommandModule current)
+        {
+            return null;
+        }
+
+        public CommandModule Unselect(CommandModule current)
+        {
+            if (targetIsHero)
+            {
+                return new EmoteCommand(current);
+            }
+            return null;
+        }
     }
 }
